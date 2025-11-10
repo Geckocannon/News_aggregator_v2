@@ -1,5 +1,5 @@
 from simple_term_menu import TerminalMenu
-from All_Functions import show_menu, main_menu, Outlet_menu
+from All_Functions import show_menu, main_menu, Outlet_menu, display, Recent_news_menu
 
 
 def main():

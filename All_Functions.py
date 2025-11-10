@@ -69,31 +69,37 @@ def Outlet_menu():
     """
 
     while True:
-        choice = show_menu(["The Hacker News", "Threat Post", "Google Threat Intelligence", "Bleeping Computer", "Krebs on Security", "Back"],
+        choice = show_menu(["The Hacker News","Checkpoint Research" , "Google Threat Intelligence", "Bleeping Computer", "Krebs on Security", "Back"],
         "Pick a News Outlet: ")
 
         if choice == "The Hacker News":
             print("Fetching The Hacker News from the last 3 days")
-            fetch_THN()
-
-        elif choice == "Threat Post":
-            print("Threat Post news from the last 3 days")
-            fetch_TP()
+            display(fetch(url="https://feeds.feedburner.com/TheHackersNews"))
+            
+        
+        elif choice == "Checkpoint Research":
+            print("Fetching Checkpoint Research news from the last week")
+            display(fetch(url="https://research.checkpoint.com/feed", days=7))
+            
         
         elif choice == "Google Threat Intelligence":
-            print("Google Threat Intelligence news from the last 3 days")
-            fetch_GTI()
+            print("Google Threat Intelligence news from the last 5 days")
+            display(fetch(url="https://feeds.feedburner.com/threatintelligence/pvexyqv7v0v", days=5))
+            
         
         elif choice == "Bleeping Computer":
-            print("Bleeping Computer from the last 3 days")
-            fetch_BC()
+            print("Bleeping Computer from the last 5 days")
+            display(fetch(url="https://www.bleepingcomputer.com/feed/", days=5))
+            
         
         elif choice == "Krebs on Secuirty":
             print("Bleeping Computer news from the last 3 days")
-            fetch_KoS()
+            display(fetch(url="https://krebsonsecurity.com/feed", days=3))
+            
 
         elif choice == "Back" or choice is None:
             break
+        
 
 
 ###################################################################################################################################################
@@ -111,14 +117,39 @@ import feedparser
 import requests
 import requests_cache
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC, timezone
+from All_Functions import mashthis
 
-def fetch_THN(url, days=3, cache_name="THN_cache", cache_expire=600, timeout=10):
+def fetch(url, days=3, cache_name="cache", cache_expire=600, timeout=10):
 
-    url = "https://feeds.feedburner.com/TheHackersNews"
+
+    """
+    Here we basically have our get_requests function from V1. We install a cache that lasts 10 minutes. We http request the hardcoded url this time.
+    Hardcoded because these are menu options not arguments being passed at the CLI. We then instantiate some fucking time rules. NGL I pulled this 
+    striaght from chat GPT. It makes almost 0 sense to me, except that it takes some cutoff which is the time now minus 3 days. It then loops
+    through the entries to see if they have the attribute "published_parsed" and if they do published parsed is equal to some time thingy. If not no idea what
+    the elif statement there is doing
+
+    next up if published time is true and it is greater than or equal to the cutoff get the details and append them to recent articles. return recent 
+    articles which is a list of dictionaries. Should be from the last 3 days.
+
+    """
+    headers = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Linux x86_64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://research.checkpoint.com/",
+    "Connection": "keep-alive",
+}
+
     requests_cache.install_cache(cache_name, expire_after=cache_expire)
     try:
-        response = requests.get(url, timeout=timeout)
+        response = requests.get(url, timeout=timeout, headers=headers)
         response.raise_for_status()
     except requests.RequestException as e:
         print(f"Error fetching THN feed: {e}")
@@ -127,15 +158,14 @@ def fetch_THN(url, days=3, cache_name="THN_cache", cache_expire=600, timeout=10)
     feed = feedparser.parse(response.content)
 
 
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     recent_articles = []
 
-    list_of_dicts = []
     for entry in feed.entries:
         if hasattr(entry, "published_parsed") and entry.published_parsed:
-            published_time = datetime.fromtimestamp(time.mktime(entry.published_parsed))
+            published_time = datetime.fromtimestamp(time.mktime(entry.published_parsed), tz=timezone.utc)
         elif "updated_parsed" in entry and entry.updated_parsed:
-            published_time = datetime.fromtimestamp(time.mktime(entry.updated_parsed))
+            published_time = datetime.fromtimestamp(time.mktime(entry.updated_parsed), tz=timezone.utc)
 
         if published_time and published_time >= cutoff:
             title = entry.get("title", "No title found")
@@ -145,6 +175,65 @@ def fetch_THN(url, days=3, cache_name="THN_cache", cache_expire=600, timeout=10)
                 "title": title,
                 "summary": entry.get("summary", "No summary found"),
                 "link": link,
-                "published": published_time.strftime("%y-%m-%d %H:%M:%S")
+                "published": published_time.strftime("%d-%m-%y %H:%M:%S")
             })
-        return recent_articles
+    return recent_articles
+
+
+###################################################################################################################################################
+
+from simple_term_menu import TerminalMenu
+import pyperclip
+import webbrowser
+
+def display(articles):
+    """
+    Take input, list of dicts, build terminal menu from title and published
+    on click copy ID, and open "link" field
+    """
+
+    if not articles:
+        print("no Articles to display")
+        return
+    
+    menu_entries = [
+        f"{a['title']} - {a['published']}" for a in articles
+    ]
+
+    menu_entries.append("Back")
+
+    while True:
+        terminal_menu = TerminalMenu(
+            menu_entries,
+            title="Pick an article to open (ID will be copied)",
+            cycle_cursor=True,
+            clear_screen=True,
+        )
+
+        choice_index = terminal_menu.show()
+
+        if choice_index is None or choice_index == len(menu_entries) - 1:
+            break
+
+        selected_article = articles[choice_index]
+        article_id = selected_article["ID"]
+        article_link = selected_article["link"]
+
+        pyperclip.copy(article_id)
+        print(f"copied ID: {article_id} to clipboard!")
+
+        webbrowser.open(article_link)
+
+###################################################################################################################################################
+
+def Recent_news_menu():
+    print("\nFetching todays news from each outlet...\n")
+    
+    todays_news = []
+    thn = todays_news.extend(fetch(url="https://feeds.feedburner.com/TheHackersNews", days=1))
+    cr = todays_news.extend(fetch(url="https://research.checkpoint.com/feed", days=1))
+    gti = todays_news.extend(fetch(url="https://feeds.feedburner.com/threatintelligence/pvexyqv7v0v", days=1))
+    bc = todays_news.extend(fetch(url="https://www.bleepingcomputer.com/feed/", days=1))
+    kos = todays_news.extend(fetch(url="https://krebsonsecurity.com/feed", days=1))
+    print(todays_news)
+    display(todays_news)
