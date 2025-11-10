@@ -1,11 +1,22 @@
 def Recent_news_menu():
     print("\nFetching todays news from each outlet...\n")
-    while true:
-        todays_news = []
-        thn = fetch(url="https://feeds.feedburner.com/TheHackersNews", days=1).append(todays_news)
-        cr = fetch(url="https://research.checkpoint.com/feed", days=1).append(todays_news)
-        gti = fetch(url="https://feeds.feedburner.com/threatintelligence/pvexyqv7v0v", days=1).append(todays_news)
-        bc = fetch(url="https://www.bleepingcomputer.com/feed/", days=1).append(todays_news)
-        kos = fetch(url="https://krebsonsecurity.com/feed", days=1).append(todays_news)
-        display(todays_news)
-    
+    todays_news = []
+
+    outlet_urls [ 
+        "https://feeds.feedburner.com/TheHackersNews",
+        "https://research.checkpoint.com/feed",
+        "https://feeds.feedburner.com/threatintelligence/pvexyqv7v0v",
+        "https://www.bleepingcomputer.com/feed/",
+        "https://krebsonsecurity.com/feed"
+    ]
+
+    for url in outlet_urls:
+        articles = fetch(url=url, days=1)
+        todays_news.extend(articles)
+
+    if todays_news:
+        with open("fetched.json", "w", encoding="utf-8") as f:
+            json.dump(todays_news, f, indent=4)
+
+    while True:
+        display(articles)

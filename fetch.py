@@ -64,9 +64,13 @@ def fetch(url, days=3, cache_name="cache", cache_expire=600, timeout=10):
                 "published": published_time.strftime("%d-%m-%y %H:%M:%S")
             })
 
-    json_recent = json.dumps(recent_articles, indent=4)  
-    with open("fetched.json", "w") as f:
-        f.write(json_recent)
+      
+    
+    if recent_articles:
+        with open("fetched.json", "w", encoding="utf-8") as f:
+            json.dump(recent_articles, f, indent=4)
+    else:
+        print("No recent articles found - keeping previous fetched.json")
               
     return recent_articles
 

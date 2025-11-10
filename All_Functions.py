@@ -119,6 +119,7 @@ import requests_cache
 import time
 from datetime import datetime, timedelta, UTC, timezone
 from All_Functions import mashthis
+import json
 
 def fetch(url, days=3, cache_name="cache", cache_expire=600, timeout=10):
 
@@ -143,7 +144,7 @@ def fetch(url, days=3, cache_name="cache", cache_expire=600, timeout=10):
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Encoding": "gzip, deflate, br",
     "Accept-Language": "en-US,en;q=0.9",
-    "Referer": "",
+    "Referer": "https://research.checkpoint.com/",
     "Connection": "keep-alive",
 }
 
@@ -152,11 +153,11 @@ def fetch(url, days=3, cache_name="cache", cache_expire=600, timeout=10):
         response = requests.get(url, timeout=timeout, headers=headers)
         response.raise_for_status()
     except requests.RequestException as e:
-        print(f"Error fetching THN feed: {e}")
+        print(f"Error fetching feed: {e}")
         return[]
     
     feed = feedparser.parse(response.content)
-
+        
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     recent_articles = []
@@ -177,7 +178,16 @@ def fetch(url, days=3, cache_name="cache", cache_expire=600, timeout=10):
                 "link": link,
                 "published": published_time.strftime("%d-%m-%y %H:%M:%S")
             })
-    return recent_articles 
+
+      
+    
+    if recent_articles:
+        with open("fetched.json", "w", encoding="utf-8") as f:
+            json.dump(recent_articles, f, indent=4)
+    else:
+        print("No recent articles found - keeping previous fetched.json")
+              
+    return recent_articles
 
 
 ###################################################################################################################################################
@@ -228,14 +238,24 @@ def display(articles):
 
 def Recent_news_menu():
     print("\nFetching todays news from each outlet...\n")
-    
     todays_news = []
-    thn = todays_news.extend(fetch(url="https://feeds.feedburner.com/TheHackersNews", days=1))
-    cr = todays_news.extend(fetch(url="https://research.checkpoint.com/feed", days=1))
-    gti = todays_news.extend(fetch(url="https://feeds.feedburner.com/threatintelligence/pvexyqv7v0v", days=1))
-    bc = todays_news.extend(fetch(url="https://www.bleepingcomputer.com/feed/", days=1))
-    kos = todays_news.extend(fetch(url="https://krebsonsecurity.com/feed", days=1))
-    print(todays_news)
+
+    outlet_urls = [ 
+        "https://feeds.feedburner.com/TheHackersNews",
+        "https://research.checkpoint.com/feed",
+        "https://feeds.feedburner.com/threatintelligence/pvexyqv7v0v",
+        "https://www.bleepingcomputer.com/feed/",
+        "https://krebsonsecurity.com/feed"
+    ]
+
+    for url in outlet_urls:
+        articles = fetch(url=url, days=1)
+        todays_news.extend(articles)
+
+    if todays_news:
+        with open("fetched.json", "w", encoding="utf-8") as f:
+            json.dump(todays_news, f, indent=4)
+    
     display(todays_news)
 
 
@@ -270,16 +290,18 @@ def add_archive():
         print("No ID entered")
         return
 
+    fetched_file = "fetched.json"
+    archive_file = "archive.json"
+
   
     #Load or create archive.json
-    archive_file = "archive.json"
+    
     if os.path.exists(archive_file):
-        with open(archive_file, "r", encoding="utf=8") as f:
-            try:
+        try:
+            with open(archive_file, "r", encoding="utf=8") as f:
                 archive_data = json.load(f)
-            except json.JSONDecodeError:
-                archive_data = []
-
+        except (json.JSONDecodeError, FileNotFoundError):
+            archive_data = []
     else:
         archive_data = []
 
@@ -292,7 +314,6 @@ def add_archive():
     
 
     #Load fetched.json
-    fetched_file = "fetched.json"
     if not os.path.exists(fetched_file):
         print("fetched.json not found. Please fetch news first")
         return
