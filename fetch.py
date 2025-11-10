@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timedelta, UTC, timezone
 from All_Functions import mashthis
 
-def fetch(url, days=3, cache_name="THN_cache", cache_expire=600, timeout=10):
+def fetch(url, days=3, cache_name="cache", cache_expire=600, timeout=10):
 
 
     """
@@ -19,10 +19,22 @@ def fetch(url, days=3, cache_name="THN_cache", cache_expire=600, timeout=10):
     articles which is a list of dictionaries. Should be from the last 3 days.
 
     """
+    headers = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Linux x86_64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://research.checkpoint.com/",
+    "Connection": "keep-alive",
+}
 
     requests_cache.install_cache(cache_name, expire_after=cache_expire)
     try:
-        response = requests.get(url, timeout=timeout)
+        response = requests.get(url, timeout=timeout, headers=headers)
         response.raise_for_status()
     except requests.RequestException as e:
         print(f"Error fetching THN feed: {e}")
@@ -53,5 +65,10 @@ def fetch(url, days=3, cache_name="THN_cache", cache_expire=600, timeout=10):
     return recent_articles
 
 
-lod = fetch(url="https://www.bleepingcomputer.com/feed/")
-print(lod)
+
+r = fetch(url="https://www.bleepingcomputer.com/feed/", days=5)
+print(r)
+
+
+
+
