@@ -13,7 +13,7 @@ def display(articles):
         return
     
     menu_entries = [
-        f"{a['title'] - {a['published']}}" for a in articles
+        f"{a['title']} - {a['published']}" for a in articles
     ]
 
     menu_entries.append("Back")

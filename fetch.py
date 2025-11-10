@@ -4,6 +4,7 @@ import requests_cache
 import time
 from datetime import datetime, timedelta, UTC, timezone
 from All_Functions import mashthis
+import json
 
 def fetch(url, days=3, cache_name="cache", cache_expire=600, timeout=10):
 
@@ -37,11 +38,11 @@ def fetch(url, days=3, cache_name="cache", cache_expire=600, timeout=10):
         response = requests.get(url, timeout=timeout, headers=headers)
         response.raise_for_status()
     except requests.RequestException as e:
-        print(f"Error fetching THN feed: {e}")
+        print(f"Error fetching feed: {e}")
         return[]
     
     feed = feedparser.parse(response.content)
-
+        
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     recent_articles = []
@@ -62,12 +63,12 @@ def fetch(url, days=3, cache_name="cache", cache_expire=600, timeout=10):
                 "link": link,
                 "published": published_time.strftime("%d-%m-%y %H:%M:%S")
             })
+
+    json_recent = json.dumps(recent_articles, indent=4)  
+    with open("fetched.json", "w") as f:
+        f.write(json_recent)
+              
     return recent_articles
-
-
-
-r = fetch(url="https://www.bleepingcomputer.com/feed/", days=5)
-print(r)
 
 
 

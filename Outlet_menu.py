@@ -16,22 +16,27 @@ def outlet_menu():
         if choice == "The Hacker News":
             print("Fetching The Hacker News from the last 3 days")
             fetch(url="https://feeds.feedburner.com/TheHackersNews")
+            display()
         
         elif choice == "Checkpoint Research":
             print("Fetching Checkpoint Research news from the last week")
             fetch(url="https://research.checkpoint.com/feed", days=7, headers=headers)
+            display()
         
         elif choice == "Google Threat Intelligence":
             print("Google Threat Intelligence news from the last 5 days")
             fetch_GTI(url="https://feeds.feedburner.com/threatintelligence/pvexyqv7v0v", days=5)
+            display()
         
         elif choice == "Bleeping Computer":
             print("Bleeping Computer from the last 5 days")
             fetch_BC(url="https://www.bleepingcomputer.com/feed/", days=5)
+            display()
         
         elif choice == "Krebs on Secuirty":
             print("Bleeping Computer news from the last 3 days")
             fetch_KoS(url="https://krebsonsecurity.com/feed", days=3)
+            display()
 
         elif choice == "Back" or choice is None:
             break
