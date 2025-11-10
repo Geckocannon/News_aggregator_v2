@@ -51,3 +51,7 @@ def fetch(url, days=3, cache_name="THN_cache", cache_expire=600, timeout=10):
                 "published": published_time.strftime("%d-%m-%y %H:%M:%S")
             })
     return recent_articles
+
+
+lod = fetch(url="https://www.bleepingcomputer.com/feed/")
+print(lod)

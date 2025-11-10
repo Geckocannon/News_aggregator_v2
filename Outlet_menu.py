@@ -15,19 +15,19 @@ def outlet_menu():
 
         if choice == "The Hacker News":
             print("Fetching The Hacker News from the last 3 days")
-            fetch_THN()
+            fetch(url="https://feeds.feedburner.com/TheHackersNews")
 
         elif choice == "Threat Post":
             print("Threat Post news from the last 3 days")
-            fetch_TP()
+            fetch(url=)
         
         elif choice == "Google Threat Intelligence":
             print("Google Threat Intelligence news from the last 3 days")
-            fetch_GTI()
+            fetch_GTI(url="https://feeds.feedburner.com/threatintelligence/pvexyqv7v0v)
         
         elif choice == "Bleeping Computer":
             print("Bleeping Computer from the last 3 days")
-            fetch_BC()
+            fetch_BC(url="https://www.bleepingcomputer.com/feed/")
         
         elif choice == "Krebs on Secuirty":
             print("Bleeping Computer news from the last 3 days")
